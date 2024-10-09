@@ -213,7 +213,7 @@ def finalize(graph, model):
     print(f"SCORE - {score} points")
     rcd.draw_result(model.recorder, graph.base_info)
 
-def init_game(start_pos, start_rot, blocks):
+def init_game(start_pos, start_rot, blocks=[]):
     graph = Graph()
     if len(blocks) > 0:
         for block in blocks:

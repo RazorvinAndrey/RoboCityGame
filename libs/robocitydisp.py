@@ -19,7 +19,7 @@ node_pos_dict = {
 
 pygame.init()
 pygame.font.init()
-rsg_font = pygame.font.SysFont('Comic Sans MS', 10)
+rsg_font = pygame.font.SysFont('Comic Sans MS', 20)
 window = pygame.display.set_mode((660, 740))
 clock = pygame.time.Clock()
 map = pygame.image.load("libs/new_city.png")
