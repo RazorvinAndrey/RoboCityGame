@@ -102,7 +102,7 @@ from libs import robotcitygame as rcg
         print("This track cannot be completed! Change base_info!")
     rcg.finalize(model=model, graph=graph)
 
-Для перехода к следующему шагу, т.е. чтобы передвинуть робота к следующему узлу необходимо нажимать `Пробел`.
+Для запуска симуляции нужно нажать `Пробел`.
 
 ## Заключение
 
