@@ -93,10 +93,12 @@ class Rover:
                     self.cur_rot = 180
                 elif point == 13:
                     self.cur_rot = 270
-                elif point == 15 and self.pos == 13:
+                elif self.pos == 13:
                     self.cur_rot = 270
+                elif self.pos == 15 and self.prev_pos == 13:
+                    self.cur_rot = 13
                 else:
-                    self.cur_rot = self.star_rot + self.graph.RotDict[self.pos][dest_index]
+                    self.cur_rot = self.graph.RotDict[self.pos][dest_index]
                 self.route.append(point)
                 self.prev_pos = self.pos
                 self.pos = point
@@ -204,12 +206,11 @@ def finalize(graph, model):
         print("Car visited all points")
     else:
         print("Car missed some points")
-    if has_returned:
-        if been_everywhere:
-            commi_coeff = 38.8/model.distance
-            score = int(30.0 * commi_coeff)
-        else:
-            score = int(15.0/14.0 * (15.0-left_meter))
+    if been_everywhere and has_returned:
+        commi_coeff = 38.8/model.distance
+        score = round(float(30.0 * commi_coeff), 3)
+    else:
+        score = round(float(15.0/14.0 * (15.0-left_meter)), 3)
     print(f"SCORE - {score} points")
     rcd.draw_result(model.recorder, graph.base_info)
 
