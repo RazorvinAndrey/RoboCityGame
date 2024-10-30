@@ -96,7 +96,7 @@ class Rover:
                 elif self.pos == 13:
                     self.cur_rot = 270
                 elif self.pos == 15 and self.prev_pos == 13:
-                    self.cur_rot = 13
+                    self.cur_rot = 270
                 else:
                     self.cur_rot = self.graph.RotDict[self.pos][dest_index]
                 self.route.append(point)
