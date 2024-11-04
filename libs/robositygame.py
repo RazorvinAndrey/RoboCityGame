@@ -39,7 +39,7 @@ class Graph:
         }
         self.RotDict = {
             1: [0, 270],
-            2: [180, 0, 290],
+            2: [180, 0, 270],
             3: [180, 270],
             4: [90, 270, 180],
             5: [90, 270, 180],
@@ -95,10 +95,8 @@ class Rover:
                     self.cur_rot = 270
                 elif self.pos == 13:
                     self.cur_rot = 270
-                elif self.pos == 15 and self.prev_pos == 13:
+                elif point == 15 and self.pos == 13:
                     self.cur_rot = 270
-                else:
-                    self.cur_rot = self.graph.RotDict[self.pos][dest_index]
                 self.route.append(point)
                 self.prev_pos = self.pos
                 self.pos = point
