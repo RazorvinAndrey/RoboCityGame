@@ -1,5 +1,6 @@
-from libs import completion_check as cc, robocitydisp as rcd
+from libs import completion_check as cc, path_finder as pf
 
+game_modes = ['roundabout', 'flag_capture']
 
 class Graph:
     def __init__(self):
@@ -49,12 +50,13 @@ class Graph:
             9: [0, 90],
             10: [90, 270, 0],
             11: [90],
-            12: [270, 180],
+            12: [90, 180],
             13: [270, 180],
             14: [0, 270, 180],
             15: [270, 180, 90, 0]
         }
         self.base_info = []
+        self.flag_pos = []
 
     def put_obstacle(self, nodes):
         if nodes[1] in self.GraphDict[nodes[0]]:
@@ -67,8 +69,18 @@ class Graph:
         else:
             print("Cannot remove smth that doesn't exist")
 
+    def put_flag(self, pos):
+        if 0 < pos < 16:
+            self.flag_pos.append(pos)
+            print(f'Flag added on position {pos}')
+            self.base_info.append(f"flag {pos}")
+        else:
+            print('Cannot put Flag there!')
+
+
 class Rover:
     def __init__(self, cur_pos, cur_rot, graph):
+        self.start_pos = cur_pos
         self.pos = cur_pos
         if cur_pos > 0 and cur_pos < 16:
             self.star_rot = cur_rot
@@ -80,6 +92,11 @@ class Rover:
         self.graph = graph
         self.distance = 0
         self.route = [self.pos]
+        self.has_flag = []
+        self.moved_before = False
+        if len(self.graph.flag_pos) > 0:
+            if self.pos in self.graph.flag_pos:
+                self.has_flag.append(self.pos)
         self.recorder = []
         graph.base_info.append(f"start {cur_pos} {cur_rot}")
 
@@ -91,10 +108,10 @@ class Rover:
                     self.cur_rot = 90
                 elif point == 12:
                     self.cur_rot = 180
-                elif point == 13:
+                elif point == 13 and self.pos == 12:
                     self.cur_rot = 270
-                elif self.pos == 13:
-                    self.cur_rot = 270
+                elif point == 13 and self.pos == 15:
+                    self.cur_rot = 0
                 elif point == 15 and self.pos == 13:
                     self.cur_rot = 270
                 self.route.append(point)
@@ -104,6 +121,10 @@ class Rover:
                 print(f"Rover has moved from node {self.prev_pos} to node {self.pos}")
                 print(f"Current rot is {self.cur_rot} degrees")
                 print(f"Distance went - {self.graph.WeightDict[self.prev_pos][dest_index]} m, Total - {self.distance} m")
+                if not self.pos in self.has_flag and len(self.graph.flag_pos) > 0:
+                    if self.pos in self.graph.flag_pos:
+                        self.has_flag.append(self.pos)
+                        print('Flag Captured!')
                 self.recorder.append(f"mov {self.pos} {self.cur_rot} succ")
             else:
                 print("Node not connected to the current position!")
@@ -113,62 +134,42 @@ class Rover:
             self.recorder.append(f"mov {self.prev_pos} {self.pos} erro")
 
     def rotate(self, degrees):
+        if not self.moved_before:
+            print('Can\'t rotate without prior movement!')
+            self.recorder.append(f"rot {degrees} {self.cur_rot} fail")
+            return
+        if degrees < -135:
+            degrees = -135
+        elif degrees > 135:
+            degrees = 135
         self.cur_rot = (self.cur_rot + degrees) % 360
         print(f"New Course - {self.cur_rot} degrees")
-        self.recorder.append(f"rot {degrees} {self.cur_rot}")
+        self.moved_before = False
+        self.recorder.append(f"rot {degrees} {self.cur_rot} succ")
 
-    def mov_to_front_point(self):
+    def go_forward(self):
         course = self.cur_rot
         if course in self.graph.RotDict[self.pos]:
             point = self.graph.GraphDict[self.pos][self.graph.RotDict[self.pos].index(course)]
             self.mov_to_point(point)
+            self.moved_before = True
         else:
             print("Going off course!")
             self.recorder.append(f"mov {self.prev_pos} {self.pos} fail")
 
-    def mov_to_left_point(self):
-        self.rotate(90)
-        course = self.cur_rot
-        if course in self.graph.RotDict[self.pos]:
-            point = self.graph.GraphDict[self.pos][self.graph.RotDict[self.pos].index(course)]
-            self.mov_to_point(point)
-        else:
-            print("Going off course!")
-            self.recorder.append(f"mov {self.prev_pos} {self.pos} fail")
-
-    def mov_to_right_point(self):
-        self.rotate(-90)
-        course = self.cur_rot
-        if course in self.graph.RotDict[self.pos]:
-            point = self.graph.GraphDict[self.pos][self.graph.RotDict[self.pos].index(course)]
-            self.mov_to_point(point)
-        else:
-            print("Going off course!")
-            self.recorder.append(f"mov {self.prev_pos} {self.pos} fail")
-
-    def mov_to_back_point(self):
-        self.rotate(180)
-        course = self.cur_rot
-        if course in self.graph.RotDict[self.pos]:
-            point = self.graph.GraphDict[self.pos][self.graph.RotDict[self.pos].index(course)]
-            self.mov_to_point(point)
-        else:
-            print("Going off course!")
-            self.recorder.append(f"mov {self.prev_pos} {self.pos} fail")
-
-    '''def finalize(self):
+def finalize(mode, graph, model):
+    if mode == 'roundabout':
         has_returned = False
         been_everywhere = False
         rout_array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
         left_meter = 0
-        score = 0
-        if self.route[0] == self.route[-1]:
+        if model.route[0] == model.route[-1]:
             has_returned = True
             print("Car returned to start position")
         else:
             print("Car didn't returned to start position")
         for i in range(15):
-            if rout_array[i] not in self.route[1:]:
+            if rout_array[i] not in model.route[1:]:
                 print(f"Car didn't visit point {rout_array[i]}")
                 left_meter+=1
         if left_meter == 0:
@@ -176,47 +177,40 @@ class Rover:
             print("Car visited all points")
         else:
             print("Car missed some points")
-        if has_returned:
-            if been_everywhere:
-                commi_coeff = 38.8/self.distance
-                score = int(30.0 * commi_coeff)
-            else:
-                score = int(15.0/14.0 * (15.0-left_meter))
-        print(f"SCORE - {score} points")'''
+        if been_everywhere and has_returned:
+            commi_coeff = 38.8/model.distance
+            score = round(float(30.0 * commi_coeff), 3)
+        else:
+            score = round(float(15.0/14.0 * (15.0-left_meter)), 3)
+        print(f"SCORE - {score} points")
+        #rcd.draw_result(model.recorder, graph.base_info)
+    elif mode == 'capture_flag':
+        res = set(graph.flag_pos) & set(model.has_flag)
+        if model.distance <= 0:
+            print('Rover didn\'t move at all!')
+            print('SCORE - 0%')
+            return
+        elif len(res) == len(graph.flag_pos):
+            print('All flags have been captured!')
+        else:
+            print('Some spots where missed')
+        optima, _ = pf.find_shortest_path(graph.GraphDict, graph.WeightDict, model.start_pos, list(res), False)
+        length = (optima / model.distance) * (len(res) / len(graph.flag_pos))
+        print(f'SCORE - {length * 100}%')
 
-def finalize(graph, model):
-    has_returned = False
-    been_everywhere = False
-    rout_array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-    left_meter = 0
-    score = 0
-    if model.route[0] == model.route[-1]:
-        has_returned = True
-        print("Car returned to start position")
-    else:
-        print("Car didn't returned to start position")
-    for i in range(15):
-        if rout_array[i] not in model.route[1:]:
-            print(f"Car didn't visit point {rout_array[i]}")
-            left_meter+=1
-    if left_meter == 0:
-        been_everywhere = True
-        print("Car visited all points")
-    else:
-        print("Car missed some points")
-    if been_everywhere and has_returned:
-        commi_coeff = 38.8/model.distance
-        score = round(float(30.0 * commi_coeff), 3)
-    else:
-        score = round(float(15.0/14.0 * (15.0-left_meter)), 3)
-    print(f"SCORE - {score} points")
-    rcd.draw_result(model.recorder, graph.base_info)
-
-def init_game(start_pos, start_rot, blocks=[]):
+def init_game(start_pos, start_rot, blocks=[], flags=[10, 11]):
     graph = Graph()
     if len(blocks) > 0:
         for block in blocks:
             graph.put_obstacle(block)
+    if len(flags) > 0:
+        for flag in flags:
+            graph.put_flag(flag)
     can_be_completed = cc.completion_test(graph.GraphDict, 1)
     model = Rover(start_pos, start_rot, graph)
     return graph, model, can_be_completed
+
+if __name__ == '__main__':
+    graph, rover, comp = init_game(1, 0, [(1, 10)])
+    dist, path = pf.round_trip(graph,1, 10)
+    print(dist, path)

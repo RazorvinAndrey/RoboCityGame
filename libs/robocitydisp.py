@@ -25,11 +25,14 @@ clock = pygame.time.Clock()
 map = pygame.image.load("libs/new_city.png")
 bibika = pygame.image.load("libs/bibika.png")
 block = pygame.image.load("libs/blockade.png")
+flag = pygame.image.load("libs/flag_poll.png")
 orig_bibika = bibika
 orig_block = block
+orig_flag = flag
 block_list = []
+flag_list = []
 
-def map_draw(window, block_list):
+def map_draw(window, block_list, flag_list):
     window.fill((255, 255, 255))
     window.blit(map, (0, 0))
     for i in range(1, 16):
@@ -59,6 +62,15 @@ def map_draw(window, block_list):
             rect = orig_block.get_rect(center=block_pose)
             block_img, block_rect = rotate_img(orig_block, rect, block_rot)
             window.blit(block_img, block_rect)
+    if len(flag_list) != 0:
+        for flag in flag_list:
+            flag_node = node_pos_dict[int(flag)]
+            flag_node = list(flag_node)
+            flag_node[1] -= 15
+            flag_node = tuple(flag_node)
+            rect = orig_flag.get_rect(center=flag_node)
+            flag_img, flag_rect = rotate_img(orig_flag, rect, 0)
+            window.blit(flag_img, flag_rect)
 
 def rotate_img(image, rect, angle):
     """Rotate the image while keeping its center."""
@@ -71,7 +83,7 @@ def rotate_img(image, rect, angle):
 def mov_rot_img(window, image, new_pos, new_angle):
     rect = image.get_rect(center=(new_pos[0], new_pos[1]))
     image, rect = rotate_img(orig_bibika, rect, new_angle)
-    map_draw(window, block_list)
+    map_draw(window, block_list, flag_list)
     window.blit(image, rect)
 
 def command_parse(logs):
@@ -88,6 +100,8 @@ def base_info_parse(base_info):
             start_rot = int(row[2])
         if row[0] == 'block':
             block_list.append([int(row[1]), int(row[2]), int(row[3])])
+        if row[0] == 'flag':
+            flag_list.append(int(row[1]))
     return start_pos, start_rot
 
 def draw_result(logs, base_info):
@@ -121,11 +135,17 @@ def draw_result(logs, base_info):
                         if comms[i][3] == 'succ':
                             cur_pos = int(comms[i][1])
                             cur_angle = int(comms[i][2])
+                            if cur_pos in flag_list:
+                                flag_list.remove(cur_pos)
                         elif comms[i][3] == 'fail' or comms[i][3] == 'erro':
                             print("ROAD COLLISION!")
                             is_finished = True
                     if comms[i][0] == 'rot':
-                        cur_angle = int(comms[i][2])
+                        if comms[i][3] == 'succ':
+                            cur_angle = int(comms[i][2])
+                        elif comms[i][3] == 'fail' or comms[i][3] == 'erro':
+                            print('NO TANK CONTROLS!')
+                            is_finished = True
                     i+=1
                 else:
                     if not is_finished:
