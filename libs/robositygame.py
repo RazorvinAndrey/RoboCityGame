@@ -196,7 +196,7 @@ def finalize(mode, graph, model):
             print('Some spots where missed')
         optima, _ = pf.find_shortest_path(graph.GraphDict, graph.WeightDict, model.start_pos, list(res), False)
         length = (optima / model.distance) * (len(res) / len(graph.flag_pos))
-        print(f'SCORE - {length * 100}%')
+        print(f'SCORE - {round(length * 100, 3)}%')
 
 def init_game(start_pos, start_rot, blocks=[], flags=[10, 11]):
     graph = Graph()
