@@ -56,52 +56,87 @@ from libs import robotcitygame as rcg
 - mov_to_point — перемещение к заданной точке;
 - rotate — изменение ориентации.
 3. Основные функции движения:
-- mov_to_front_point()
-- mov_to_right_point()
-- mov_to_left_point()
-- mov_to_back_point()
+- go_forward()
+- rotate()
 
 ## Управление роботом
 
 Вот основные функции, которые вы будете использовать для управления роботом:
 1. Инициализация игры
-    `school_graph, model, can_be_completed = rcg.init_game(start_pos, start_rot, blocks)`
+    `school_graph, model, can_be_completed = rcg.init_game(start_pos, start_rot, blocks, flags)`
 - start_pos — начальная позиция робота (номер узла).
-- start_rot — начальная ориентация (градусы).
-- blocks — информация об других участниках дорожного движения, указывается между какими точками находиться участник (например, [[1, 2], [3, 4]]).
-2. Перемещение робота
-- model.mov_to_front_point() — двигаться вперёд;
-- model.mov_to_right_point() — двигаться вправо;
-- model.mov_to_left_point() — двигаться влево;
-- model.mov_to_back_point() — двигаться назад.
-3. Завершение игры и оценка
-`rcg.finalize(graph, model)` 
-Эта функция рассчитывает баллы за выполнение задания и выводит график движения.
+- start_rot — начальная ориентация (градусы, 0 - направление "на восток", от узла 1 к узлу 2).
+- blocks — информация об других участниках дорожного движения, указывается между какими точками находиться участник (например, [[1, 2], [3, 4]]). Опциональный параметр.
+- flags — информация об узлах, посещение которых обязательно (например [1, 2, 13]). Опциональный параметр.
+1. Перемещение робота
+- model.fo_forward() — двигаться вперёд;
+- model.rotate(angle) — повернуться на некоторый угол angle;
+1. Завершение игры и оценка
+`rcg.finalize(mode, graph, model)` 
+Эта функция рассчитывает баллы за выполнение задания и выводит график движения. Баллы рассчитываются исходя из режима mode, о котором написано ниже.
+
+## Режимы программы
+
+Программа способна работать в двух режимах - это режим прохождения всего трека ***roundabout*** и режим проезда по определённым точкам ***capture_flag***.
+
+### Roundabout
+
+Цель - проехать наикратчайшим путём по всем узлам трека, посетив каждый узел всего 1 раз.
+
+### Capture_flag
+
+Цель - проехать по выделенным точкам наикратчайшим маршрутом.
 
 ## Пример программы
 
-Вот пример, как может выглядеть ваша программа с использованием RCG:
+Вот пример, как может выглядеть ваша программа с использованием RCG в режиме roundabout:
 
     from libs import robositygame as rcg
 
-    graph, model, com_flag = rcg.init_game(1, 0, [[4, 5], [8, 15]])
+    graph, model, com_flag = rcg.init_game(1, (0 % 360), [[4, 5], [8, 15]])
     if com_flag:
         # Начало команд программиста
-        model.mov_to_front_point()
-        model.mov_to_front_point()
-        model.mov_to_right_point()
-        model.mov_to_right_point()
-        model.mov_to_front_point()
-        model.mov_to_front_point()
-        model.mov_to_right_point()
-        model.mov_to_left_point()
-        model.mov_to_front_point()
-        model.mov_to_right_point()
-        model.mov_to_right_point()
-        model.mov_to_front_point()
-        model.mov_to_front_point()
-        model.mov_to_right_point()
-        model.mov_to_front_point()
+        model.go_forward()
+        model.go_forward()
+        mode.rotate(-90)
+        model.go_forward()
+        mode.rotate(-90)
+        model.go_forward()
+        model.go_forward()
+        model.go_forward()
+        mode.rotate(-90)
+        model.go_forward()
+        mode.rotate(90)
+        model.go_forward()
+        model.go_forward()
+        mode.rotate(-90)
+        model.go_forward()
+        mode.rotate(-90)
+        model.go_forward()
+        model.go_forward()
+        model.go_forward()
+        mode.rotate(-90)
+        model.go_forward()
+        model.go_forward()
+        #Конец команд 
+    else:
+        print("This track cannot be completed! Change base_info!")
+    rcg.finalize(mode='roundabout', model=model, graph=graph)
+    
+Вот пример, как может выглядеть ваша программа с использованием RCG в режиме capture_flag:
+
+    from libs import robositygame as rcg
+
+    graph, model, com_flag = rcg.init_game(1, (270 % 360), [], [10, 9, 7])
+    if com_flag:
+        # Начало команд программиста
+        model.go_forward()  
+		model.rotate(90)  
+		model.go_forward()  
+		model.rotate(-90)  
+		model.go_forward()  
+		model.rotate(-90)  
+		model.go_forward()
         #Конец команд 
     else:
         print("This track cannot be completed! Change base_info!")
