@@ -157,46 +157,46 @@ class Rover:
             print("Going off course!")
             self.recorder.append(f"mov {self.prev_pos} {self.pos} fail")
 
-def finalize(mode, graph, model):
-    if mode == 'roundabout':
-        has_returned = False
-        been_everywhere = False
-        rout_array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-        left_meter = 0
-        if model.route[0] == model.route[-1]:
-            has_returned = True
-            print("Car returned to start position")
-        else:
-            print("Car didn't returned to start position")
-        for i in range(15):
-            if rout_array[i] not in model.route[1:]:
-                print(f"Car didn't visit point {rout_array[i]}")
-                left_meter+=1
-        if left_meter == 0:
-            been_everywhere = True
-            print("Car visited all points")
-        else:
-            print("Car missed some points")
-        if been_everywhere and has_returned:
-            commi_coeff = 38.8/model.distance
-            score = round(float(30.0 * commi_coeff), 3)
-        else:
-            score = round(float(15.0/14.0 * (15.0-left_meter)), 3)
-        print(f"SCORE - {score} points")
-        #rcd.draw_result(model.recorder, graph.base_info)
-    elif mode == 'capture_flag':
-        res = set(graph.flag_pos) & set(model.has_flag)
-        if model.distance <= 0:
-            print('Rover didn\'t move at all!')
-            print('SCORE - 0%')
-            return
-        elif len(res) == len(graph.flag_pos):
-            print('All flags have been captured!')
-        else:
-            print('Some spots where missed')
-        optima, _ = pf.find_shortest_path(graph.GraphDict, graph.WeightDict, model.start_pos, list(res), False)
-        length = (optima / model.distance) * (len(res) / len(graph.flag_pos))
-        print(f'SCORE - {round(length * 100, 3)}%')
+def finalize(graph, model): # mode='capture_flag'
+    # if mode == 'roundabout':
+    #     has_returned = False
+    #     been_everywhere = False
+    #     rout_array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    #     left_meter = 0
+    #     if model.route[0] == model.route[-1]:
+    #         has_returned = True
+    #         print("Car returned to start position")
+    #     else:
+    #         print("Car didn't returned to start position")
+    #     for i in range(15):
+    #         if rout_array[i] not in model.route[1:]:
+    #             print(f"Car didn't visit point {rout_array[i]}")
+    #             left_meter+=1
+    #     if left_meter == 0:
+    #         been_everywhere = True
+    #         print("Car visited all points")
+    #     else:
+    #         print("Car missed some points")
+    #     if been_everywhere and has_returned:
+    #         commi_coeff = 38.8/model.distance
+    #         score = round(float(30.0 * commi_coeff), 3)
+    #     else:
+    #         score = round(float(15.0/14.0 * (15.0-left_meter)), 3)
+    #     print(f"SCORE - {score} points")
+    #     #rcd.draw_result(model.recorder, graph.base_info)
+    # elif mode == 'capture_flag':
+    res = set(graph.flag_pos) & set(model.has_flag)
+    if model.distance <= 0:
+        print('Rover didn\'t move at all!')
+        print('SCORE - 0%')
+        return
+    elif len(res) == len(graph.flag_pos):
+        print('All flags have been captured!')
+    else:
+        print('Some spots where missed')
+    optima, _ = pf.find_shortest_path(graph.GraphDict, graph.WeightDict, model.start_pos, list(res), False)
+    length = (optima / model.distance) * (len(res) / len(graph.flag_pos))
+    print(f'SCORE - {round(length * 100, 3)}%')
 
 def init_game(start_pos, start_rot, blocks=[], flags=[10, 11]):
     graph = Graph()
