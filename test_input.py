@@ -3,18 +3,12 @@ from libs import robocitydisp as rcd
 
 if __name__ == '__main__':
 
-    graph, model, com_flag = rcg.init_game(1, 270, [[10,15],[1,2]], [10, 9, 7])
+    graph, model, com_flag = rcg.init_game(4, 180, [], [9])
     if not com_flag:
         print("This track cannot be completed! Change base_info!")
     # ЗДЕСЬ НАЧИНАЮТСЯ ВАШИ КОММАНДЫ/АЛГОРИТМ
     model.go_forward()
-    model.go_forward()
-    model.rotate(90)
-    model.go_forward()
-    model.rotate(90)
-    model.go_forward()
-    model.rotate(90)
-    model.go_forward()
+    model.rotate(-90)
     model.go_forward()
 
     #ЗДЕСЬ ЗАКАНЧИВАЮТСЯ ВАШИ КОМАНДЫ/АЛГОРИТМ

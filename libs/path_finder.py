@@ -1,11 +1,14 @@
 import heapq
 import itertools
 
-def find_path(graph, weights, start, end):
+def find_path_with_rot(graph, weights, rots, start, end, start_rot, can_turn):
     distances = {node: float('inf') for node in graph}
     distances[start] = 0
+    rotation = start_rot
     priority_queue = [(0, start)]  # (расстояние, узел)
     previous_nodes = {node: None for node in graph}  # Для отслеживания пути
+    firstNode = not can_turn
+    rot_cand = None
 
     while priority_queue:
         current_distance, current_node = heapq.heappop(priority_queue)
@@ -19,8 +22,69 @@ def find_path(graph, weights, start, end):
         # Рассматриваем соседние узлы и их веса
         neighbors = graph[current_node]
         neighbor_weights = weights[current_node]
+        neighbor_rots = rots[current_node]
+
+        for neighbor, weight, rot in zip(neighbors, neighbor_weights, neighbor_rots):
+            if firstNode and (rot != rotation):
+                continue
+            turn_angle = (rot - rotation) % 360
+            if turn_angle > 180:
+                turn_angle -= 360
+            if abs(turn_angle) > 150:
+                continue
+
+            distance = current_distance + weight
+
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                rot_cand = rot
+                previous_nodes[neighbor] = current_node  # Сохраняем предшествующий узел
+                heapq.heappush(priority_queue, (distance, neighbor))
+        rotation = rot_cand
+        if firstNode:
+            firstNode = False
+
+
+    # Восстановление пути
+    path = []
+    current_node = end
+    while current_node is not None:
+        path.append(current_node)
+        current_node = previous_nodes[current_node]
+    path.reverse()  # Разворачиваем путь, чтобы он был в правильном порядке
+
+    return distances[end], path, rotation  # Возвращаем кратчайшее расстояние и путь
+
+def find_path_without_rot(graph, weights, start, end, prev_node):
+    distances = {node: float('inf') for node in graph}
+    distances[start] = 0
+    priority_queue = [(0, start)]  # (расстояние, узел)
+    previous_nodes = {node: None for node in graph}  # Для отслеживания пути
+    past_node = prev_node
+
+    while priority_queue:
+        copy_graph = graph.copy()
+        copy_weights = weights.copy()
+        current_distance, current_node = heapq.heappop(priority_queue)
+
+        if current_node == end:
+            break  # Найден конечный узел, можно завершить цикл
+
+        if current_distance > distances[current_node]:
+            continue
+
+        if past_node is not None and past_node in copy_graph[current_node]:
+            idx = copy_graph[current_node].index(past_node)
+            copy_graph[current_node].pop(idx)
+            copy_weights[current_node].pop(idx)
+
+        # Рассматриваем соседние узлы и их веса
+        neighbors = copy_graph[current_node]
+        neighbor_weights = copy_weights[current_node]
 
         for neighbor, weight in zip(neighbors, neighbor_weights):
+            if neighbor == past_node:
+                continue
             distance = current_distance + weight
 
             if distance < distances[neighbor]:
@@ -35,38 +99,47 @@ def find_path(graph, weights, start, end):
         path.append(current_node)
         current_node = previous_nodes[current_node]
     path.reverse()  # Разворачиваем путь, чтобы он был в правильном порядке
+    print(path)
 
     return distances[end], path  # Возвращаем кратчайшее расстояние и путь
 
-def find_shortest_path(graph, weights, start, targets, come_back):
+def find_shortest_path(graph, weights, rots, start, start_rot, targets):
     min_distance = float('inf')
     best_path = []
+    if start in targets:
+        targets.remove(start)
 
     # Перебираем все перестановки целевых узлов
     for perm in itertools.permutations(targets):
+        rotat = start_rot
         current_distance = 0
         current_node = start
+        turning = False
+        paths = [start]
 
         # Рассчитываем расстояние для текущей перестановки
         for target in perm:
-            distance, path = find_path(graph, weights, current_node, target)
+            if not turning:
+                distance, path, cur_rot = find_path_with_rot(graph, weights, rots, current_node, target, rotat, turning)
+            else:
+                distance, path  = find_path_without_rot(graph, weights, current_node, target, paths[-2])
             if distance == float('inf'):
                 current_distance = float('inf')
                 break
             current_distance += distance
             current_node = target
+            paths += path[1:]
+            rotat = cur_rot
+            turning = True
+            if set(targets).issubset(paths):
+                break
+        print(f'list {list(perm)}')
+        print(f'dist {current_distance}')
 
         # Проверьте, является ли текущий путь кратчайшим
         if current_distance < min_distance:
             min_distance = current_distance
-            best_path = [start] + list(perm)
-
-    if come_back:
-        distance, path = find_path(graph, weights, best_path[-1], start)
-        print(best_path)
-        min_distance += distance
-        best_path = best_path + path
-
+            best_path = paths
     return min_distance, best_path
 
 if __name__ == '__main__':
@@ -82,13 +155,12 @@ if __name__ == '__main__':
         8: [7, 9, 15],
         9: [8, 10],
         10: [1, 9, 15],
-        11: [12],
+        11: [4, 12],
         12: [2, 13],
         13: [11, 15],
         14: [5, 7, 15],
         15: [8, 10, 13, 14]
     }
-
     WeightDict = {
         1: [5.5, 5.0],
         2: [5.5, 1.3, 2.5],
@@ -100,22 +172,34 @@ if __name__ == '__main__':
         8: [2.4, 2.0, 2.5],
         9: [2.0, 2.5],
         10: [5.0, 2.5, 2.0],
-        11: [0.5],
+        11: [2.5, 0.5],
         12: [2.5, 1.0],
         13: [2.0, 2.5],
         14: [2.4, 3.5, 2.3],
         15: [2.5, 2.0, 2.5, 2.3]
     }
+    RotDict = {
+        1: [0, 270],
+        2: [180, 0, 270],
+        3: [180, 270],
+        4: [90, 270, 180],
+        5: [90, 270, 180],
+        6: [90, 180],
+        7: [0, 180, 90],
+        8: [0, 180, 90],
+        9: [0, 90],
+        10: [90, 270, 0],
+        11: [0, 90],
+        12: [90, 180],
+        13: [270, 180],
+        14: [0, 270, 180],
+        15: [270, 180, 90, 0]
+    }
     # Пример использования
     # Данные графа
-    start_node = 13
-    target_nodes = [2, 3, 5, 15]
-    return_to_sender = True
-    shortest_path_distance, shortest_path = find_shortest_path(GraphDict, WeightDict, start_node, target_nodes, return_to_sender)
-
-    if return_to_sender:
-        print(f"Кратчайшее расстояние от узла {start_node} с посещением узлов {target_nodes} с возвратом: {shortest_path_distance}")
-    else:
-        print(
-            f"Кратчайшее расстояние от узла {start_node} с посещением узлов {target_nodes} без возврата: {shortest_path_distance}")
+    start_node = 1
+    start_rot = 0
+    target_nodes = [1, 2, 15]
+    shortest_path_distance, shortest_path = find_shortest_path(GraphDict, WeightDict, RotDict, start_node, start_rot, target_nodes)
+    print(f"Кратчайшее расстояние от узла {start_node} с посещением узлов {target_nodes} без возврата: {shortest_path_distance}")
     print(f"Путь: {' -> '.join(map(str, shortest_path))}")
