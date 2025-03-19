@@ -1,5 +1,6 @@
 import heapq
 import itertools
+from copy import deepcopy
 
 def find_path_with_rot(graph, weights, rots, start, end, start_rot, can_turn):
     distances = {node: float('inf') for node in graph}
@@ -63,8 +64,8 @@ def find_path_without_rot(graph, weights, start, end, prev_node):
     past_node = prev_node
 
     while priority_queue:
-        copy_graph = graph.copy()
-        copy_weights = weights.copy()
+        copy_graph = deepcopy(graph)
+        copy_weights = deepcopy(weights)
         current_distance, current_node = heapq.heappop(priority_queue)
 
         if current_node == end:
