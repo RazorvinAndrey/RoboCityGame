@@ -36,17 +36,17 @@ def find_path_with_rot(graph, weights, rots, start, end, start_rot, can_turn):
 
             if current_node == 10 and end == 8:
                 distance = current_distance + 2.5
-                distances[neighbor] = distance
+                distances[9] = distance
                 rot_cand = rot
-                previous_nodes[neighbor] = current_node
+                previous_nodes[9] = current_node
                 heapq.heappush(priority_queue, (distance, 9))
                 break
 
             if current_node == 5 and end == 7:
                 distance = current_distance + 3.4
-                distances[neighbor] = distance
+                distances[6] = distance
                 rot_cand = rot
-                previous_nodes[neighbor] = current_node
+                previous_nodes[6] = current_node
                 heapq.heappush(priority_queue, (distance, 6))
                 break
 
@@ -106,15 +106,15 @@ def find_path_without_rot(graph, weights, start, end, prev_node):
 
             if current_node == 10 and end == 8:
                 distance = current_distance + 2.5
-                distances[neighbor] = distance
-                previous_nodes[neighbor] = current_node
+                distances[9] = distance
+                previous_nodes[9] = current_node
                 heapq.heappush(priority_queue, (distance, 9))
                 break
 
             if current_node == 5 and end == 7:
                 distance = current_distance + 3.4
-                distances[neighbor] = distance
-                previous_nodes[neighbor] = current_node
+                distances[6] = distance
+                previous_nodes[6] = current_node
                 heapq.heappush(priority_queue, (distance, 6))
                 break
 
@@ -235,8 +235,14 @@ if __name__ == '__main__':
     # Данные графа
     start_node = 1
     start_rot = 270
-    target_nodes = [8, 15, 11, 2]
-    dist, path, rot = find_path_with_rot(GraphDict, WeightDict, RotDict, 1, 8, 270, False)
+    target_nodes = [1, 5, 7, 10]
+    dist, path, rot = find_path_with_rot(GraphDict, WeightDict, RotDict, 1, 10, 270, False)
+    print(f'distance {dist}')
+    print(f'path chosen {path}')
+    dist, path = find_path_without_rot(GraphDict, WeightDict, 10, 5, 1)
+    print(f'distance {dist}')
+    print(f'path chosen {path}')
+    dist, path = find_path_without_rot(GraphDict, WeightDict, 5, 7, 8)
     print(f'distance {dist}')
     print(f'path chosen {path}')
     shortest_path_distance, shortest_path = find_shortest_path(GraphDict, WeightDict, RotDict, start_node, start_rot, target_nodes)
