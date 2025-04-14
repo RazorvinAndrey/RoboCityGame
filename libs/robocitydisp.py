@@ -113,7 +113,7 @@ def draw_result(logs, base_info):
     i = 0
     cur_pos = start_pos
     cur_angle = start_rot
-    mov_rot_img(window=window, image=orig_bibika, new_pos=node_pos_dict[cur_pos], new_angle=cur_angle)
+    mov_rot_img(window=window, image=orig_bibika, new_pos=(1000, 1000), new_angle=cur_angle)
     pygame.display.flip()
     comms = command_parse(logs)
     while True:
@@ -151,7 +151,7 @@ def draw_result(logs, base_info):
                     if not is_finished:
                         print("animation_finished")
                         is_finished = True
-            mov_rot_img(window=window, image=orig_bibika, new_pos=node_pos_dict[cur_pos], new_angle=cur_angle)
+            #mov_rot_img(window=window, image=orig_bibika, new_pos=node_pos_dict[cur_pos], new_angle=cur_angle)
             j+=1
             pygame.display.flip()
             clock.tick(60)

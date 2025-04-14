@@ -131,12 +131,15 @@ class Rover:
                         self.has_flag.append(self.pos)
                         print('Flag Captured!')
                 self.recorder.append(f"mov {self.pos} {self.cur_rot} succ")
+                return True
             else:
                 print("Node not connected to the current position!")
                 self.recorder.append(f"mov {self.pos} fail")
+                return False
         else:
             print("There is no such node!")
             self.recorder.append(f"mov {self.prev_pos} {self.pos} erro")
+            return True
 
     def rotate(self, degrees):
         if not self.moved_before:
@@ -169,12 +172,26 @@ def finalize(graph, model): # mode='capture_flag'
         print('SCORE - 0%')
         return
     elif len(res) == len(graph.flag_pos):
-        print('All flags have been captured!')
+        print('All flags have ёbeen captured!')
     else:
         print('Some spots where missed')
     optima, _ = pf.find_shortest_path(graph.GraphDict, graph.WeightDict, graph.RotDict, model.start_pos, model.start_rot, list(res))
     length = (optima / model.distance) * (len(res) / len(graph.flag_pos))
     print(f'SCORE - {round(length * 100, 3)}%')
+
+def finalize_to_vizual_interface(graph, model):
+    res = set(graph.flag_pos) & set(model.has_flag)
+    if model.distance <= 0:
+        return 0, "Rover didn't move at all!"
+    elif len(res) == len(graph.flag_pos):
+        message = "All flags have been captured!"
+    else:
+        message = "Some spots were missed."
+
+    optima, opt_path = pf.find_shortest_path(graph.GraphDict, graph.WeightDict, graph.RotDict, model.start_pos, model.start_rot, list(res))
+    length = (optima / model.distance) * (len(res) / len(graph.flag_pos)) * 100
+    score = round(length, 3)
+    return score, message, opt_path
 
 def init_game(start_pos, start_rot, blocks=[], flags=[10, 11]):
     graph = Graph()
