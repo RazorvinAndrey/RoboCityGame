@@ -316,13 +316,13 @@ if __name__ == '__main__':
         15: [270, 180, 90, 0]
     }'''
     graph = Graph()
-    graph.put_obstacle([15, 10])
+    graph.put_obstacle([2, 3])
     #graph.put_obstacle([14, 5])
     # Пример использования
     # Данные графа
-    start_node = 8
-    start_rot = 90
-    target_nodes = [2, 8, 10, 15]
+    start_node = 1
+    start_rot = 0
+    target_nodes = [3, 5]
     shortest_path_distance, shortest_path = find_shortest_path(graph.GraphDict, graph.WeightDict, graph.RotDict, start_node, start_rot, target_nodes)
     print(f"Кратчайшее расстояние от узла {start_node} с посещением узлов {target_nodes} без возврата: {shortest_path_distance}")
     print(f"Путь: {' -> '.join(map(str, shortest_path))}")

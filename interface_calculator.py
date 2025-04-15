@@ -5,7 +5,7 @@ from calculator import (
     line_parces,
     find_length,
 )
-from libs import robositygame as rcg
+from libs import robositygame as rcg, path_finder as pf
 
 
 class ApertureScienceInterface:
@@ -24,6 +24,10 @@ class ApertureScienceInterface:
         except AttributeError:
             self.resample_method = Image.ANTIALIAS
 
+        icon_img = Image.open("roboveinik.png").resize((32, 32), self.resample_method)
+        self.icon_tk = ImageTk.PhotoImage(icon_img)
+        self.root.iconphoto(False, self.icon_tk)
+
         self.paned = tk.PanedWindow(self.root, orient=tk.HORIZONTAL, sashwidth=4, bg="#1e1e1e", sashrelief=tk.RAISED)
         self.paned.pack(fill=tk.BOTH, expand=True)
 
@@ -34,10 +38,9 @@ class ApertureScienceInterface:
         self.paned.add(self.right_panel)
         self.paned.sash_place(0, 500, 0)  # Устанавливаем положение полосы почти по центру
 
-
         self.create_scrollable_image()
 
-        self.logo = Image.open("roboveinik.png").resize((60, 60), self.resample_method)
+        self.logo = Image.open("keker.png").resize((60, 60), self.resample_method)
         self.logo_tk = ImageTk.PhotoImage(self.logo)
 
         self.create_right_panel()
@@ -160,10 +163,20 @@ class ApertureScienceInterface:
             gen_line = self.route_entry.get()
             start_pos = int(self.start_pos_entry.get())
             start_rot = int(self.start_rot_entry.get())
-            blocks = list(map(int, self.blocks_entry.get().split(","))) if self.blocks_entry.get() else []
+            blocks = self.blocks_entry.get()
             flags = list(map(int, self.flags_entry.get().split(","))) if self.flags_entry.get() else []
+            blocks_new = []
+            if blocks:
+                for part in blocks.split("],"):
+                    part = part.replace("[", "").replace("]", "").strip()
+                    if part:
+                        pair = list(map(int, part.split(",")))
+                        if len(pair) == 2:
+                            blocks_new.append(pair)
 
-            gen_graph, gen_rover, com_flag = rcg.init_game(start_pos, start_rot, blocks, flags)
+            gen_graph, gen_rover, com_flag = rcg.init_game(start_pos, start_rot, blocks_new, flags)
+            _, perf_path = pf.find_shortest_path(gen_graph.GraphDict, gen_graph.WeightDict, gen_graph.RotDict, start_pos, start_rot, flags)
+            self.output_text.insert(tk.END, f"Истинный путь - {perf_path}\n")
 
             path = self.line_parse(gen_line)
             if path is None:
